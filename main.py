@@ -8,6 +8,8 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from mistralai import Mistral
 import re
+import requests
+import base64
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +27,72 @@ app = App(token=SLACK_BOT_TOKEN)
 mistral = Mistral(api_key=MISTRAL_API_KEY)
 conversations = {}
 
-@app.event("message")
+@app.event("message
+
+           @app.event("file_shared")
+def handle_file_upload(event, say, client):
+    """Handle file uploads for image recognition"""
+    file_id = event["file_id"]
+    user_id = event["user_id"]
+    channel_id = event.get("channel_id")
+    
+    logger.info(f"📷 File upload from {user_id}: {file_id}")
+    
+    try:
+        # Get file info from Slack
+        file_info = client.files_info(file=file_id)["file"]
+        file_url = file_info.get("url_private")
+        mimetype = file_info.get("mimetype", "")
+        
+        # Only process images
+        if not mimetype.startswith("image/"):
+            return
+        
+        # Download image
+        import headers = {"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}Authorization": f"Bearer {SLACK_BOT_TOKEN}"}
+        response = requests.get(file_url, headers=headers)
+        image_data = response.content
+        
+        # Encode image to base64 for Mistral
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        # Send to Mistral with image
+        if user_id not in conversations:
+            conversations[user_id] = []
+        
+        # Add image message
+        conversations[user_id].append({
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Analysiere dieses Bild und identifiziere die Lebensmittel."},
+                {"type": "image_url", "image_url": f"data:{mimetype};base64,{image_base64}"}
+            ]
+        })
+        
+        # Get response from Mistral
+        response = mistral.agents.complete(
+            agent_id=AGENT_ID,
+            messages=conversations[user_id]
+        )
+        
+        answer = response.choices[0].message.content
+        conversations[user_id].append({"role": "assistant", "content": answer})
+        
+        # Send response
+        if channel_id:
+            say(text=answer, channel=channel_id)
+        else:
+            # Send DM if no channel
+            client.chat_postMessage(channel=user_id, text=answer)
+        
+        logger.info("✅ Image analysis sent")
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing image: {e}")
+        error_msg = f"⚠️ Fehler beim Analysieren des Bildes: {e}"
+        if channel_id:
+            say(text=error_msg, channel=channel_id)
+        else:
+            client.chat_postMessage(channel=user_id, text=error_msg)")
 def handle_message(event, say, client):
     if event.get("bot_id") or event.get("subtype"):
         return
