@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NährWerk - Benutzerübersicht</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .user-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+        .user-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .user-id {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .no-users {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥗 NährWerk - Benutzerübersicht</h1>
+        {% if error %}
+        <div class="no-users">
+            <p>❌ Fehler beim Laden der Benutzer: {{ error }}</p>
+        </div>
+        {% elif users %}
+        <div class="users-grid">
+            {% for user in users %}
+            <a href="/user/{{ user.id }}" class="user-card">
+                <div class="user-name">{{ user.slack_name or 'Benutzer ' + user.id|string }}</div>
+                <div class="user-id">ID: {{ user.id }}</div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-users">
+            <p>Keine Benutzer gefunden</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
