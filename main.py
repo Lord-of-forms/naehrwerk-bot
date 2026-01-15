@@ -65,7 +65,7 @@ def save_meal(user_id: int, meal_type: str, description: str, calories: int = No
         return None
 
 
-       @app.event("file_shared")
+   @app.event("file_shared")
 def handle_file_upload(event, say, client):
     """Handle file uploads for image recognition"""
     file_id = event["file_id"]
