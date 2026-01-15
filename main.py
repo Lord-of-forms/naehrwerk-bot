@@ -10,6 +10,7 @@ from mistralai import Mistral
 import re
 import requests
 import base64
+from supabase import create_client, Client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,10 +23,46 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 AGENT_ID = os.getenv("AGENT_ID")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = App(token=SLACK_BOT_TOKEN)
 mistral = Mistral(api_key=MISTRAL_API_KEY)
 conversations = {}
+
+# Database Helper Functions
+def create_or_get_user(slack_user_id: str):
+    """Create or get user from database"""
+    try:
+        result = supabase.table('users').select('*').eq('slack_user_id', slack_user_id).execute()
+        if result.data:
+            return result.data[0]
+        else:
+            new_user = supabase.table('users').insert({'slack_user_id': slack_user_id}).execute()
+            return new_user.data[0]
+    except Exception as e:
+        logger.error(f"Error creating/getting user: {e}")
+        return None
+
+def save_meal(user_id: int, meal_type: str, description: str, calories: int = None):
+    """Save a meal to the database"""
+    try:
+        meal_data = {
+            'user_id': user_id,
+            'meal_type': meal_type,
+            'description': description
+        }
+        if calories:
+            meal_data['calories'] = calories
+        result = supabase.table('meals').insert(meal_data).execute()
+        logger.info(f"✅ Meal saved for user {user_id}")
+        return result.data[0] if result.data else None
+    except Exception as e:
+        logger.error(f"Error saving meal: {e}")
+        return None
 
 @app.event("message
 
