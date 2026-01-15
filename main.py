@@ -58,12 +58,34 @@ def handle_message(event, say, client):
         say(text=f"⚠️ Fehler: {e}", channel=channel, thread_ts=thread_ts)
 
 @app.event("app_mention")
-def handle_mention(event, say):
-    say(
-        text="👋 Hi! Ich bin dein Ernährungsassistent!\n\n🥗 Schreib mir deine Fragen!",
-        channel=event["channel"]
-    )
-
+def handle_mention(event, say, client):
+    user_id = event["user"]
+    text = event.get("text", "").replace(f"<@{app.client.auth_test()['user_id']}>", "").strip()
+    channel = event["channel"]
+    thread_ts = event["ts"]
+    
+    logger.info(f"👋 Mention from {user_id}: {text}")
+    
+    if user_id not in conversations:
+        conversations[user_id] = []
+    
+    conversations[user_id].append({"role": "user", "content": text})
+    
+    try:
+        response = mistral.agents.complete(
+            agent_id=AGENT_ID,
+            messages=conversations[user_id]
+        )
+        
+        answer = response.choices[0].message.content
+        conversations[user_id].append({"role": "assistant", "content": answer})
+        
+        say(text=answer, channel=channel, thread_ts=thread_ts)
+        logger.info("✅ Response sent")
+        
+    except Exception as e:
+        logger.error(f"❌ Error: {e}")
+        say(text=f"⚠️ Fehler: {e}", channel=channel, thread_ts=thread_ts)
 def main():
     logger.info("🍏 NährWerk Bot starting...")
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
