@@ -64,7 +64,6 @@ def save_meal(user_id: int, meal_type: str, description: str, calories: int = No
         logger.error(f"Error saving meal: {e}")
         return None
 
-@app.event("message
 
            @app.event("file_shared")
 def handle_file_upload(event, say, client):
