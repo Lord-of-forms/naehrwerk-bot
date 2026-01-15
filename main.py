@@ -61,8 +61,8 @@ def handle_message(event, say, client):
 @app.event("app_mention")
 def handle_mention(event, say, client):
     user_id = event["user"]
-    text = event.get("text", "")    channel = event["channel"]
-    # Remove bot mentions like <@U123456>
+    text = event.get("text", "")    # Remove bot mentions like <@U123456>
+    channel = event["channel"]
     text = re.sub(r'<@[A-Z0-9]+>', '', text).strip()
     thread_ts = event["ts"]
     
