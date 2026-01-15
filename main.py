@@ -7,6 +7,7 @@ import logging
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from mistralai import Mistral
+import re
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,8 +61,9 @@ def handle_message(event, say, client):
 @app.event("app_mention")
 def handle_mention(event, say, client):
     user_id = event["user"]
-    text = event.get("text", "").replace(f"<@{app.client.auth_test()['user_id']}>", "").strip()
-    channel = event["channel"]
+    text = event.get("text", "")    channel = event["channel"]
+    # Remove bot mentions like <@U123456>
+    text = re.sub(r'<@[A-Z0-9]+>', '', text).strip()
     thread_ts = event["ts"]
     
     logger.info(f"👋 Mention from {user_id}: {text}")
